@@ -7,6 +7,7 @@ import yt_dlp
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
+discord.opus.load_opus("libopus.so.0")
 load_dotenv()
 
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
