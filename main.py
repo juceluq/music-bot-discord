@@ -9,14 +9,13 @@ from spotipy.oauth2 import SpotifyClientCredentials
 
 load_dotenv()
 
-# Spotify API setup
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
     client_id=os.getenv("SPOTIFY_CLIENT_ID"),
     client_secret=os.getenv("SPOTIFY_CLIENT_SECRET")
 ))
 
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix='!', intents=intents)
+bot = commands.Bot(command_prefix='cojons', intents=intents)
 
 ytdl_opts = {
     'format': 'bestaudio/best',
@@ -66,7 +65,6 @@ async def play(ctx, url):
     else:
         voice = await channel.connect()
 
-    # Detectar Spotify y convertirlo en búsqueda de YouTube
     if "open.spotify.com" in url:
         search_query = get_spotify_title(url)
         if not search_query:
@@ -74,7 +72,6 @@ async def play(ctx, url):
             return
         url = f"ytsearch:{search_query}"
 
-    # Extraer información de YouTube
     with yt_dlp.YoutubeDL(ytdl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         if 'entries' in info:
@@ -95,7 +92,8 @@ async def play(ctx, url):
 
     if not voice.is_playing():
         await ctx.send(f"😈 **Reproduciendo:** {title}")
-        voice.play(discord.FFmpegPCMAudio(audio_url, executable=r'D:\!!!!PROGRAMACION\discord\ffmpeg-7.1.1-essentials_build\bin\ffmpeg.exe', **ffmpeg_opts), after=lambda e: check_queue(ctx))
+        ffmpeg_path = os.path.join(os.getcwd(), 'ffmpeg-7.1.1-essentials_build', 'bin', 'ffmpeg.exe')
+        voice.play(discord.FFmpegPCMAudio(audio_url, executable=ffmpeg_path, **ffmpeg_opts), after=lambda e: check_queue(ctx))
     else:
         queues[ctx.guild.id].append({'title': title, 'url': audio_url})
         await ctx.send(f"🎶 **Añadido a la cola:** {title}")
@@ -104,7 +102,8 @@ def check_queue(ctx):
     if queues[ctx.guild.id]:
         next_song = queues[ctx.guild.id].pop(0)
         voice = ctx.voice_client
-        voice.play(discord.FFmpegPCMAudio(next_song['url'], executable=r'D:\!!!!PROGRAMACION\discord\ffmpeg-7.1.1-essentials_build\bin\ffmpeg.exe', **ffmpeg_opts), after=lambda e: check_queue(ctx))
+        ffmpeg_path = os.path.join(os.getcwd(), 'ffmpeg-7.1.1-essentials_build', 'bin', 'ffmpeg.exe')
+        voice.play(discord.FFmpegPCMAudio(next_song['url'], executable=ffmpeg_path, **ffmpeg_opts), after=lambda e: check_queue(ctx))
         asyncio.run_coroutine_threadsafe(ctx.send(f"😈 **Reproduciendo siguiente canción:** {next_song['title']}"), bot.loop)
     else:
         asyncio.run_coroutine_threadsafe(ctx.send("No hay más canciones en la cola."), bot.loop)
