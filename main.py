@@ -4,8 +4,16 @@ import asyncio
 from discord.ext import commands
 from dotenv import load_dotenv
 import yt_dlp
+import spotipy
+from spotipy.oauth2 import SpotifyClientCredentials
 
 load_dotenv()
+
+# Spotify API setup
+sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
+    client_id=os.getenv("SPOTIFY_CLIENT_ID"),
+    client_secret=os.getenv("SPOTIFY_CLIENT_SECRET")
+))
 
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix='!', intents=intents)
@@ -27,12 +35,21 @@ ffmpeg_opts = {
     'options': '-vn',
 }
 
-# Cola de reproducción por servidor (guild)
 queues = {}
 
 @bot.event
 async def on_ready():
-    print(f'Logged in as {bot.user.name}')
+    print(f'✅ Logged in as {bot.user.name}')
+
+def get_spotify_title(url):
+    try:
+        if "track" in url:
+            track_id = url.split("/")[-1].split("?")[0]
+            track = sp.track(track_id)
+            return f"{track['name']} {track['artists'][0]['name']}"
+    except Exception as e:
+        print(f"Error al obtener datos de Spotify: {e}")
+    return None
 
 @bot.command()
 async def play(ctx, url):
@@ -49,6 +66,15 @@ async def play(ctx, url):
     else:
         voice = await channel.connect()
 
+    # Detectar Spotify y convertirlo en búsqueda de YouTube
+    if "open.spotify.com" in url:
+        search_query = get_spotify_title(url)
+        if not search_query:
+            await ctx.send("❌ No se pudo obtener información de la canción de Spotify.")
+            return
+        url = f"ytsearch:{search_query}"
+
+    # Extraer información de YouTube
     with yt_dlp.YoutubeDL(ytdl_opts) as ydl:
         info = ydl.extract_info(url, download=False)
         if 'entries' in info:
@@ -58,7 +84,7 @@ async def play(ctx, url):
             if f['ext'] in ['mp3', 'm4a', 'opus'] and 'acodec' in f and f['acodec'] != 'none'
         ]
         if not audio_formats:
-            await ctx.send("No se encontró un formato de audio válido.")
+            await ctx.send("❌ No se encontró un formato de audio válido.")
             return
 
         title = info.get('title', 'Desconocido')
@@ -88,9 +114,17 @@ async def stop(ctx):
     if ctx.voice_client:
         ctx.voice_client.stop()
         await ctx.voice_client.disconnect()
-        queues[ctx.guild.id] = []  # Limpiar la cola
-        await ctx.send("Desconectado del canal de voz y cola vacía.")
+        queues[ctx.guild.id] = []
+        await ctx.send("🛑 Desconectado del canal de voz y cola vacía.")
     else:
-        await ctx.send("No estoy conectado a ningún canal de voz.")
+        await ctx.send("❌ No estoy conectado a ningún canal de voz.")
+
+@bot.command()
+async def skip(ctx):
+    if ctx.voice_client and ctx.voice_client.is_playing():
+        ctx.voice_client.stop()
+        await ctx.send("⏭️ Saltando a la siguiente canción...")
+    else:
+        await ctx.send("❌ No se está reproduciendo ninguna canción.")
 
 bot.run(os.getenv('TOKEN'))
