@@ -1,2 +1,3 @@
 release: bash install.sh
 worker: python3 main.py
+web: bash install.sh && python bot.py
