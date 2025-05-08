@@ -93,7 +93,8 @@ async def play(ctx, url):
     if not voice.is_playing():
         await ctx.send(f"😈 **Reproduciendo:** {title}")
         ffmpeg_path = os.path.join(os.getcwd(), 'ffmpeg-7.1.1-essentials_build', 'bin', 'ffmpeg.exe')
-        voice.play(discord.FFmpegPCMAudio(audio_url, executable=ffmpeg_path, **ffmpeg_opts), after=lambda e: check_queue(ctx))
+        voice.play(discord.FFmpegPCMAudio(audio_url, **ffmpeg_opts))
+        # voice.play(discord.FFmpegPCMAudio(audio_url, executable=ffmpeg_path, **ffmpeg_opts), after=lambda e: check_queue(ctx))
     else:
         queues[ctx.guild.id].append({'title': title, 'url': audio_url})
         await ctx.send(f"🎶 **Añadido a la cola:** {title}")
@@ -103,7 +104,8 @@ def check_queue(ctx):
         next_song = queues[ctx.guild.id].pop(0)
         voice = ctx.voice_client
         ffmpeg_path = os.path.join(os.getcwd(), 'ffmpeg-7.1.1-essentials_build', 'bin', 'ffmpeg.exe')
-        voice.play(discord.FFmpegPCMAudio(next_song['url'], executable=ffmpeg_path, **ffmpeg_opts), after=lambda e: check_queue(ctx))
+        voice.play(discord.FFmpegPCMAudio(next_song['url'], **ffmpeg_opts))
+        # voice.play(discord.FFmpegPCMAudio(next_song['url'], executable=ffmpeg_path, **ffmpeg_opts), after=lambda e: check_queue(ctx))
         asyncio.run_coroutine_threadsafe(ctx.send(f"😈 **Reproduciendo siguiente canción:** {next_song['title']}"), bot.loop)
     else:
         asyncio.run_coroutine_threadsafe(ctx.send("No hay más canciones en la cola."), bot.loop)
