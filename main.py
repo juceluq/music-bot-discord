@@ -7,6 +7,10 @@ import yt_dlp
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
+discord.opus.load_opus()
+if not discord.opus.is_loaded():
+    raise RuntimeError("No se pudo cargar la biblioteca libopus")
+
 load_dotenv()
 
 sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
@@ -15,7 +19,7 @@ sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
 ))
 
 intents = discord.Intents.all()
-bot = commands.Bot(command_prefix='cojons', intents=intents)
+bot = commands.Bot(command_prefix='++', intents=intents)
 
 ytdl_opts = {
     'format': 'bestaudio/best',
