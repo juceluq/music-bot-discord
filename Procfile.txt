@@ -1,1 +1,2 @@
-worker: bash install.sh && python3 main.py
+release: bash install.sh
+worker: python3 main.py
