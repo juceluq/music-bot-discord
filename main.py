@@ -38,7 +38,11 @@ if os.path.exists(_COOKIE_FILE):
     YTDL_OPTS["cookiefile"] = _COOKIE_FILE
     print(f"[yt-dlp] Usando cookies.txt")
 
-FFMPEG_PATH = os.path.join(os.path.dirname(__file__), "ffmpeg-7.1.1-essentials_build", "bin", "ffmpeg.exe")
+import shutil
+
+# En Railway/Linux ffmpeg está en PATH; en Windows usamos el build local
+_local_ffmpeg = os.path.join(os.path.dirname(__file__), "ffmpeg-7.1.1-essentials_build", "bin", "ffmpeg.exe")
+FFMPEG_PATH = _local_ffmpeg if os.path.isfile(_local_ffmpeg) else (shutil.which("ffmpeg") or "ffmpeg")
 
 # -- Estado por servidor -----------------------------------------------------
 
