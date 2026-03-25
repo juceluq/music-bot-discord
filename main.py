@@ -23,7 +23,22 @@ sp = spotipy.Spotify(auth_manager=SpotifyClientCredentials(
 
 # -- Configuracion yt-dlp ----------------------------------------------------
 
+import base64, tempfile
+
 _COOKIE_FILE = os.path.join(os.path.dirname(__file__), "cookies.txt")
+
+# Soporte para cookies desde variable de entorno (base64) → util en Render/Railway
+_COOKIE_ENV = os.getenv("YOUTUBE_COOKIES_B64")
+if _COOKIE_ENV and not os.path.exists(_COOKIE_FILE):
+    try:
+        _decoded = base64.b64decode(_COOKIE_ENV).decode("utf-8")
+        _tmp = tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False)
+        _tmp.write(_decoded)
+        _tmp.flush()
+        _COOKIE_FILE = _tmp.name
+        print(f"[yt-dlp] Cookies cargadas desde YOUTUBE_COOKIES_B64")
+    except Exception as _e:
+        print(f"[yt-dlp] Error decodificando YOUTUBE_COOKIES_B64: {_e}")
 
 YTDL_OPTS: dict = {
     "format": "bestaudio/best",
@@ -33,7 +48,7 @@ YTDL_OPTS: dict = {
     "default_search": "ytsearch",
     "extractor_args": {
         "youtube": {
-            "player_client": ["ios", "android", "web"],
+            "player_client": ["tv_embedded", "ios", "android"],
         }
     },
 }
