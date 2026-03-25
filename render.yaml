@@ -1,0 +1,13 @@
+services:
+  - type: worker
+    name: music-bot-discord
+    runtime: docker
+    envVars:
+      - key: TOKEN
+        sync: false
+      - key: SPOTIFY_CLIENT_ID
+        sync: false
+      - key: SPOTIFY_CLIENT_SECRET
+        sync: false
+      - key: GUILD_ID
+        sync: false

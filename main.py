@@ -430,9 +430,14 @@ class QueueView(discord.ui.View):
 
         if current:
             dur = format_duration(current.get("duration"))
+            cur_title = current.get("title", "Desconocida")
+            if len(cur_title) > 60:
+                cur_title = cur_title[:59] + "…"
+            cur_url = current.get("webpage_url", "")
+            cur_link = f"[{cur_title}]({cur_url})" if cur_url and not cur_url.startswith("ytsearch:") else cur_title
             embed.add_field(
                 name="▶️ Reproduciendo ahora",
-                value=f"**{_song_link(current)}** `{dur}`",
+                value=f"**{cur_link}** `{dur}`",
                 inline=False,
             )
             if current.get("thumbnail"):
@@ -445,8 +450,19 @@ class QueueView(discord.ui.View):
             lines = []
             for i, song in enumerate(page_songs, start + 1):
                 dur = format_duration(song.get("duration"))
-                lines.append(f"`{i}.` {_song_link(song)} `{dur}`")
-            embed.add_field(name="En cola", value="\n".join(lines), inline=False)
+                title = song.get("title", "Desconocida")
+                url   = song.get("webpage_url", "")
+                # Truncar títulos largos para no superar el límite de 1024 chars por campo
+                max_title = 60
+                if len(title) > max_title:
+                    title = title[:max_title - 1] + "…"
+                link = f"[{title}]({url})" if url and not url.startswith("ytsearch:") else title
+                lines.append(f"`{i}.` {link} `{dur}`")
+            field_value = "\n".join(lines)
+            # Salvaguarda: truncar el campo entero si aún supera 1024
+            if len(field_value) > 1024:
+                field_value = field_value[:1021] + "…"
+            embed.add_field(name="En cola", value=field_value, inline=False)
         elif not current:
             embed.description = "La cola está vacía."
 

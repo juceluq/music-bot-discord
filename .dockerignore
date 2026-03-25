@@ -1,8 +1,9 @@
-.env
-.cache
 ffmpeg-7.1.1-essentials_build/
 .venv/
 __pycache__/
 *.pyc
 *.pyo
+.git/
+.env
+.cache
 listformats.py
