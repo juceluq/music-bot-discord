@@ -31,7 +31,11 @@ YTDL_OPTS: dict = {
     "quiet": True,
     "logtostderr": False,
     "default_search": "ytsearch",
-    "js_runtimes": {"node": {}},
+    "extractor_args": {
+        "youtube": {
+            "player_client": ["ios", "android", "web"],
+        }
+    },
 }
 
 if os.path.exists(_COOKIE_FILE):
@@ -218,7 +222,16 @@ async def fetch_song(query: str) -> dict | None:
 
 async def fetch_yt_playlist(url: str) -> list[dict] | None:
     loop = asyncio.get_event_loop()
-    opts = {"extract_flat": True, "quiet": True, "noplaylist": False}
+    opts = {
+        "extract_flat": True,
+        "quiet": True,
+        "noplaylist": False,
+        "extractor_args": {
+            "youtube": {
+                "player_client": ["ios", "android", "web"],
+            }
+        },
+    }
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = await loop.run_in_executor(
             None, lambda: ydl.extract_info(url, download=False)
@@ -799,4 +812,11 @@ async def clear_queue(interaction: discord.Interaction):
     ))
 
 
-bot.run(os.getenv("TOKEN"))
+import time
+
+while True:
+    try:
+        bot.run(os.getenv("TOKEN"), reconnect=True)
+    except Exception as e:
+        print(f"[Bot] Error crítico: {e}. Reiniciando en 10 segundos...")
+        time.sleep(10)
