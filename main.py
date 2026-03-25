@@ -117,6 +117,25 @@ class MusicBot(commands.Bot):
     async def on_ready(self):
         print(f"Conectado como {self.user.name}")
 
+    async def on_app_command_error(
+        self, interaction: discord.Interaction, error: app_commands.AppCommandError
+    ):
+        cause = getattr(error, "original", error)
+        if isinstance(cause, discord.NotFound) and cause.code == 10062:
+            # Interacción expirada (bot tardó demasiado o fue reiniciado)
+            print(f"[Interacción expirada] {error}")
+            return
+        # Para otros errores intentar notificar al usuario
+        msg = f"❌ Error inesperado: {cause}"
+        try:
+            if interaction.response.is_done():
+                await interaction.followup.send(msg, ephemeral=True)
+            else:
+                await interaction.response.send_message(msg, ephemeral=True)
+        except Exception:
+            pass
+        print(f"[AppCommandError] {error}")
+
 
 bot = MusicBot()
 
@@ -520,7 +539,7 @@ async def process_single(
 
     # Spotify playlist
     if "spotify.com" in item and "/playlist/" in item:
-        queries = get_spotify_playlist_queries(item)
+        queries = await asyncio.to_thread(get_spotify_playlist_queries, item)
         if not queries:
             results.append(("error", f"No se pudo cargar playlist Spotify: {item}"))
             return
@@ -539,7 +558,7 @@ async def process_single(
 
     # Spotify album
     if "spotify.com" in item and "/album/" in item:
-        queries = get_spotify_album_queries(item)
+        queries = await asyncio.to_thread(get_spotify_album_queries, item)
         if not queries:
             results.append(("error", f"No se pudo cargar album Spotify: {item}"))
             return
@@ -558,7 +577,7 @@ async def process_single(
 
     # Spotify track
     if "spotify.com" in item and "/track/" in item:
-        query = get_spotify_track_query(item)
+        query = await asyncio.to_thread(get_spotify_track_query, item)
         if not query:
             results.append(("error", f"No se pudo obtener track Spotify: {item}"))
             return
